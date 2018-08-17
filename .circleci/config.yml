@@ -102,57 +102,79 @@ filters_only_release_tags: &filters_only_release_tags
 version: 2.0
 
 aliases:
- - &test
- - &test_docker
-   - *container_postgres
-   - *container_mysql
-   - *container_elasticsearch
-   - *container_redis
-   - *container_mongo
-   - *container_memcached
-   - *container_agent
- - &docker-1_9
-   - <<: *container-1_9
-     environment:
-       - TEST_DATADOG_INTEGRATION: 1
- - &bundler_init
-    name: Initializing Bundler vendor path
-    command: bundle --path vendor/bundle
- - &build_files
-     root: .
-     key: 'betav7-bundle-{{ .Environment.CIRCLE_JOB }}-{{ checksum "Gemfile" }}-{{ checksum "ddtrace.gemspec" }}-{{ checksum "Appraisals" }}'
-     paths:
-       - vendor/bundle
-       - gemfiles/
-       - Gemfile.lock
- - &wait_for_postgres
-     name: Waiting for Postgres to be ready
-     command: |
-       for i in `seq 1 30`;
-       do
-         nc -z localhost 5432 && echo Success && exit 0
-         echo -n .
-         sleep 1
-       done
-       echo Failed waiting for Postgres && exit 1
+  - &docker_test_environment
+      environment:
+        - TEST_DATADOG_INTEGRATION: 1
+  - &test_dockerss
+    - *container_postgres
+    - *container_mysql
+    - *container_elasticsearch
+    - *container_redis
+    - *container_mongo
+    - *container_memcached
+    - *container_agent
+  - &docker-1_9sss
+    - <<: *container-1_9
 
-
-
-jobs:
-  test-1.9:
+  - &bundler_init
+      name: Initializing Bundler vendor path
+      command: bundle --path vendor/bundle
+  - &build_files
+      root: .
+      key: 'betav7-bundle-{{ .Environment.CIRCLE_JOB }}-{{ checksum "Gemfile" }}-{{ checksum "ddtrace.gemspec" }}-{{ checksum "Appraisals" }}'
+      paths:
+        - vendor/bundle
+        - gemfiles/
+        - Gemfile.lock
+  - &wait_for_postgres
+      name: Waiting for Postgres to be ready
+      command: |
+        for i in `seq 1 30`;
+        do
+          nc -z localhost 5432 && echo Success && exit 0
+          echo -n .
+          sleep 1
+        done
+        echo Failed waiting for Postgres && exit 1
+  - &test_base
+      <<: *job_defaults
+      steps:
+        - checkout
+        - attach_workspace:
+           at: /app
+        - run: *bundler_init
+        - run: *wait_for_postgres
+        - *step_run_all_tests
+  - &build_base
     <<: *job_defaults
-    docker:
-      <<: [*test_docker, *docker-1_9]
     steps:
+      - checkout
       - attach_workspace:
          at: /app
-      - checkout
       - restore_cache: *build_files
       - run: *bundler_init
       - *step_bundle_install
       - *step_appraisal_install
       - save_cache: *build_files
-      - *step_run_all_tests
+      - persist_to_workspace: *build_files
+
+jobs:
+  "(1.9) build":
+    <<: *build_base
+    docker: [ *container-1_9 ]
+
+  "(1.9) test":
+    <<: *test_base
+    docker:
+      - <<: [ *container-1_9, *docker_test_environment ]
+      - *container_postgres
+      - *container_mysql
+      - *container_elasticsearch
+      - *container_redis
+      - *container_mongo
+      - *container_memcached
+      - *container_agent
+
   deploy-release:
     <<: *job_defaults
     docker:
@@ -167,11 +189,15 @@ jobs:
       - *step_release_docs
 
 workflows:
+  aliases:
+    - &job_default
+      <<: *filters_all_branches_and_tags
   version: 2
   build-and-test:
     jobs:
-      - test-1.9:
-          <<: *filters_all_branches_and_tags
+      - "(1.9) test":
+          requires: "(1.9) build"
+      - "(1.9) build": *job_default
       - deploy-release:
           <<: *filters_only_release_tags
           requires:
