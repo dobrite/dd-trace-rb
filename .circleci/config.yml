@@ -4,30 +4,21 @@ job_defaults: &job_defaults
   shell: /bin/bash --login
 
 ruby_containers: &ruby_containers
+  - &container_defaults
+      environment:
+        - BUNDLE_GEMFILE=/app/Gemfile
   - &container-1_9
-    image: datadog/docker-library:ddtrace_rb_1_9_3
-    environment:
-      - BUNDLE_GEMFILE=/app/Gemfile
+    <<: [ image: 'datadog/docker-library:ddtrace_rb_1_9_3', *container_defaults ]
   - &container-2_0
-    image: datadog/docker-library:ddtrace_rb_2_0_0
-    environment:
-      - BUNDLE_GEMFILE=/app/Gemfile
+    <<: [ image: 'datadog/docker-library:ddtrace_rb_2_0_0', *container_defaults ]
   - &container-2_1
-    image: datadog/docker-library:ddtrace_rb_2_1_10
-    environment:
-      - BUNDLE_GEMFILE=/app/Gemfile
+    <<: [ image: 'datadog/docker-library:ddtrace_rb_2_1_10', *container_defaults ]
   - &container-2_2
-    image: datadog/docker-library:ddtrace_rb_2_2_10
-    environment:
-      - BUNDLE_GEMFILE=/app/Gemfile
+    <<: [ image: 'datadog/docker-library:ddtrace_rb_2_2_10', *container_defaults ]
   - &container-2_3
-    image: datadog/docker-library:ddtrace_rb_2_3_7
-    environment:
-      - BUNDLE_GEMFILE=/app/Gemfile
+    <<: [ image: 'datadog/docker-library:ddtrace_rb_2_3_7', *container_defaults ]
   - &container-2_4
-    image: datadog/docker-library:ddtrace_rb_2_4_4
-    environment:
-      - BUNDLE_GEMFILE=/app/Gemfile
+    <<: [ image: 'datadog/docker-library:ddtrace_rb_2_4_4', *container_defaults ]
 
 test_containers: &test_containers
   - &container_postgres
@@ -57,65 +48,14 @@ test_containers: &test_containers
       - DD_BIND_HOST=0.0.0.0
       - DD_API_KEY=invalid_key_but_this_is_fine
 
-step_init_bundle_checksum: &step_init_bundle_checksum
-  run:
-    name: Initialize bundle cache key
-    command: |
-      touch .circleci/bundle_checksum
-step_bundle_install: &step_bundle_install
-  run:
-    name: Install gem dependencies
-    command: bundle install
-step_rubocop: &step_rubocop
-  run:
-    name: Delint with Rubocop
-    command: bundle exec rake rubocop
-step_appraisal_install: &step_appraisal_install
-  run:
-    name: Install Appraisal gems
-    command: bundle exec appraisal install
-step_compute_bundle_checksum: &step_compute_bundle_checksum
-  run:
-    name: Compute bundle checksum
-    command: |
-      cat Gemfile.lock gemfiles/*.gemfile.lock > .circleci/bundle_checksum
-step_run_all_tests: &step_run_all_tests
-  run:
-    name: Run tests
-    command: bundle exec rake ci
-step_release_docs: &step_release_docs
-  run:
-    name: Upload release docs
-    command: S3_DIR=trace bundle exec rake release:docs
-
-filters_all_branches_and_tags: &filters_all_branches_and_tags
-  filters:
-    tags:
-      only: /.*/
-filters_only_release_tags: &filters_only_release_tags
-  filters:
-    branches:
-      ignore: /.*/
-    tags:
-      only: /^v\d+(\.\d+){0,3}(\.(alpha|beta|rc)\d+)?$/
-
 version: 2.0
 
-aliases:
+job_aliases:
+  - &default_workspace
+      at: /app
   - &docker_test_environment
       environment:
         - TEST_DATADOG_INTEGRATION: 1
-  - &test_dockerss
-    - *container_postgres
-    - *container_mysql
-    - *container_elasticsearch
-    - *container_redis
-    - *container_mongo
-    - *container_memcached
-    - *container_agent
-  - &docker-1_9sss
-    - <<: *container-1_9
-
   - &bundler_init
       name: Initializing Bundler vendor path
       command: bundle --path vendor/bundle
@@ -140,29 +80,60 @@ aliases:
       <<: *job_defaults
       steps:
         - checkout
-        - attach_workspace:
-           at: /app
+        - attach_workspace: *default_workspace
         - run: *bundler_init
         - run: *wait_for_postgres
-        - *step_run_all_tests
+        - run:
+            name: Run tests
+            command: bundle exec rake ci
   - &build_base
     <<: *job_defaults
     steps:
       - checkout
-      - attach_workspace:
-         at: /app
+      - attach_workspace: *default_workspace
       - restore_cache: *build_files
       - run: *bundler_init
-      - *step_bundle_install
-      - *step_appraisal_install
+      - run: &bundle_install
+          name: Install gem dependencies
+          command: bundle install
+      - run:
+          name: Install Appraisal gems
+          command: bundle exec appraisal install
       - save_cache: *build_files
       - persist_to_workspace: *build_files
 
 jobs:
-  "(1.9) build":
-    <<: *build_base
-    docker: [ *container-1_9 ]
-
+  "static analysis":
+    <<: *job_defaults
+    docker: [ *container-2_4 ]
+    steps:
+      - checkout
+      - attach_workspace: *default_workspace
+      - run: *bundler_init
+      - run:
+          name: Delint with Rubocop
+          command: bundle exec rake rubocop
+  "deploy release":
+    <<: *job_defaults
+    docker: [ *container-2_4 ]
+    steps:
+      - checkout
+      - attach_workspace: *default_workspace
+      - run: *bundler_init
+      - run:
+          name: Install AWS cli
+          command: |
+            apt-get -y -qq update
+            apt-get -y -qq install awscli
+      - run:
+          name: Upload release docs
+          command: S3_DIR=trace bundle exec rake release:docs
+  "(1.9) build": { <<: [ *build_base, docker: [ *container-1_9 ] ] }
+  "(2.0) build": { <<: [ *build_base, docker: [ *container-2_0 ] ] }
+  "(2.1) build": { <<: [ *build_base, docker: [ *container-2_1 ] ] }
+  "(2.2) build": { <<: [ *build_base, docker: [ *container-2_2 ] ] }
+  "(2.3) build": { <<: [ *build_base, docker: [ *container-2_3 ] ] }
+  "(2.4) build": { <<: [ *build_base, docker: [ *container-2_4 ] ] }
   "(1.9) test":
     <<: *test_base
     docker:
@@ -174,32 +145,101 @@ jobs:
       - *container_mongo
       - *container_memcached
       - *container_agent
-
-  deploy-release:
-    <<: *job_defaults
+  "(2.0) test":
+    <<: *test_base
     docker:
-      - *container-2_4
-    steps:
-      - checkout
-      - run:
-          command: |
-            apt-get -y -qq update
-            apt-get -y -qq install awscli
-      - *step_bundle_install
-      - *step_release_docs
+      - <<: [ *container-2_0, *docker_test_environment ]
+      - *container_postgres
+      - *container_mysql
+      - *container_elasticsearch
+      - *container_redis
+      - *container_mongo
+      - *container_memcached
+      - *container_agent
+  "(2.1) test":
+    <<: *test_base
+    docker:
+      - <<: [ *container-2_1, *docker_test_environment ]
+      - *container_postgres
+      - *container_mysql
+      - *container_elasticsearch
+      - *container_redis
+      - *container_mongo
+      - *container_memcached
+      - *container_agent
+  "(2.2) test":
+    <<: *test_base
+    docker:
+      - <<: [ *container-2_2, *docker_test_environment ]
+      - *container_postgres
+      - *container_mysql
+      - *container_elasticsearch
+      - *container_redis
+      - *container_mongo
+      - *container_memcached
+      - *container_agent
+  "(2.3) test":
+    <<: *test_base
+    docker:
+      - <<: [ *container-2_3, *docker_test_environment ]
+      - *container_postgres
+      - *container_mysql
+      - *container_elasticsearch
+      - *container_redis
+      - *container_mongo
+      - *container_memcached
+      - *container_agent
+  "(2.4) test":
+    <<: *test_base
+    docker:
+      - <<: [ *container-2_4, *docker_test_environment ]
+      - *container_postgres
+      - *container_mysql
+      - *container_elasticsearch
+      - *container_redis
+      - *container_mongo
+      - *container_memcached
+      - *container_agent
+
+wf_aliases:
+  - &filters_all_branches_and_tags
+    filters:
+      tags:
+        only: /.*/
+  - &filters_only_release_tags
+    filters:
+      branches:
+        ignore: /.*/
+      tags:
+        only: /^v\d+(\.\d+){0,3}(\.(alpha|beta|rc)\d+)?$/
+  - &job_default
+    <<: *filters_all_branches_and_tags
 
 workflows:
-  aliases:
-    - &job_default
-      <<: *filters_all_branches_and_tags
   version: 2
   build-and-test:
     jobs:
-      - "(1.9) test":
-          requires: "(1.9) build"
       - "(1.9) build": *job_default
-      - deploy-release:
+      - "(2.0) build": *job_default
+      - "(2.1) build": *job_default
+      - "(2.2) build": *job_default
+      - "(2.3) build": *job_default
+      - "(2.4) build": *job_default
+      - "(1.9) test": { <<: [ *job_default, requires: [ "(1.9) build" ] ] }
+      - "(2.0) test": { <<: [ *job_default, requires: [ "(2.0) build" ] ] }
+      - "(2.1) test": { <<: [ *job_default, requires: [ "(2.1) build" ] ] }
+      - "(2.2) test": { <<: [ *job_default, requires: [ "(2.2) build" ] ] }
+      - "(2.3) test": { <<: [ *job_default, requires: [ "(2.3) build" ] ] }
+      - "(2.4) test": { <<: [ *job_default, requires: [ "(2.4) build" ] ] }
+      - "static analysis": { <<: [ *job_default, requires: [ "(2.4) build" ] ] }
+      - "deploy release":
           <<: *filters_only_release_tags
           requires:
-            - test-1.9
+            - "(2.4) build"
+            - "(1.9) test"
+            - "(2.0) test"
+            - "(2.1) test"
+            - "(2.2) test"
+            - "(2.3) test"
+            - "(2.4) test"
 
