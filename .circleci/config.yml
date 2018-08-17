@@ -210,7 +210,7 @@ jobs:
     parallelism: 1
     steps:
       - checkout
-      - attach_workspace: &default_workspace
+      - attach_workspace: *default_workspace
       - run: *bundler_init
       - run: *wait_for_postgres
       - run:
@@ -226,7 +226,7 @@ jobs:
     docker: [ *container-2_3 ]
     steps:
       - checkout
-      - attach_workspace: &default_workspace
+      - attach_workspace: *default_workspace
       - run: *bundler_init
       - store_artifacts:
           path: tmp/benchmarks
@@ -269,6 +269,11 @@ workflows:
       - "(1/2) benchmark": { <<: [ *job_default, requires: [ "(2.3) build" ] ] }
       - "(2/2) benchmark": { <<: [ *job_default, requires: [ "(2.3) build" ] ] }
       - "static analysis": { <<: [ *job_default, requires: [ "(2.3) build" ] ] }
+      - "aggregate benchmarks":
+        <<: *job_default
+        requires:
+          - "(1/2) benchmark"
+          - "(2/2) benchmark"
       - "deploy release":
           <<: *filters_only_release_tags
           requires:
