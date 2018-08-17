@@ -270,10 +270,10 @@ workflows:
       - "(2/2) benchmark": { <<: [ *job_default, requires: [ "(2.3) build" ] ] }
       - "static analysis": { <<: [ *job_default, requires: [ "(2.3) build" ] ] }
       - "aggregate benchmarks":
-        <<: *job_default
-        requires:
-          - "(1/2) benchmark"
-          - "(2/2) benchmark"
+          <<: *job_default
+          requires:
+            - "(1/2) benchmark"
+            - "(2/2) benchmark"
       - "deploy release":
           <<: *filters_only_release_tags
           requires:
