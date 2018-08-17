@@ -242,18 +242,18 @@ workflows:
   version: 2
   build-and-test:
     jobs:
-      - "(1.9) build": *job_default
-      - "(2.0) build": *job_default
-      - "(2.1) build": *job_default
-      - "(2.2) build": *job_default
+#      - "(1.9) build": *job_default
+#      - "(2.0) build": *job_default
+#      - "(2.1) build": *job_default
+#      - "(2.2) build": *job_default
       - "(2.3) build": *job_default
-      - "(2.4) build": *job_default
-      - "(1.9) test": { <<: [ *job_default, requires: [ "(1.9) build" ] ] }
-      - "(2.0) test": { <<: [ *job_default, requires: [ "(2.0) build" ] ] }
-      - "(2.1) test": { <<: [ *job_default, requires: [ "(2.1) build" ] ] }
-      - "(2.2) test": { <<: [ *job_default, requires: [ "(2.2) build" ] ] }
-      - "(2.3) test": { <<: [ *job_default, requires: [ "(2.3) build" ] ] }
-      - "(2.4) test": { <<: [ *job_default, requires: [ "(2.4) build" ] ] }
+#      - "(2.4) build": *job_default
+#      - "(1.9) test": { <<: [ *job_default, requires: [ "(1.9) build" ] ] }
+#      - "(2.0) test": { <<: [ *job_default, requires: [ "(2.0) build" ] ] }
+#      - "(2.1) test": { <<: [ *job_default, requires: [ "(2.1) build" ] ] }
+#      - "(2.2) test": { <<: [ *job_default, requires: [ "(2.2) build" ] ] }
+#      - "(2.3) test": { <<: [ *job_default, requires: [ "(2.3) build" ] ] }
+#      - "(2.4) test": { <<: [ *job_default, requires: [ "(2.4) build" ] ] }
       - "(1/2) benchmark": { <<: [ *job_default, requires: [ "(2.3) build" ] ] }
       - "(2/2) benchmark": { <<: [ *job_default, requires: [ "(2.3) build" ] ] }
       - "static analysis": { <<: [ *job_default, requires: [ "(2.3) build" ] ] }
