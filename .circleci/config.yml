@@ -210,8 +210,7 @@ jobs:
     parallelism: 1
     steps:
       - checkout
-      - attach_workspace:
-          at: /app
+      - attach_workspace: &default_workspace
       - run: *bundler_init
       - run: *wait_for_postgres
       - run:
@@ -222,6 +221,19 @@ jobs:
           paths:
             - 'tmp/benchmarks/**/*.csv'
   "(2/2) benchmark": *benchmark
+  "aggregate benchmarks":
+    <<: *job_defaults
+    docker: [ *container-2_3 ]
+    steps:
+      - checkout
+      - attach_workspace: &default_workspace
+      - run: *bundler_init
+      - store_artifacts:
+          path: tmp/benchmarks
+      - run:
+          name: Sidekiq benchmark results
+          command: bundle exec ruby benchmarks/process_results.rb tmp/benchmarks/sidekiq_test/*.csv
+
 
 
 wf_aliases:
