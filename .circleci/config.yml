@@ -232,7 +232,7 @@ jobs:
           path: tmp/benchmarks
       - run:
           name: Sidekiq benchmark results
-          command: bundle exec ruby benchmarks/process_results.rb tmp/benchmarks/sidekiq_test/*.csv
+          command: bundle exec ruby .circleci/process_results.rb tmp/benchmarks/sidekiq_test/*.csv
 
 
 
