@@ -61,7 +61,7 @@ job_aliases:
       command: bundle --path vendor/bundle
   - &build_files
       root: .
-      key: 'betav7-bundle-{{ .Environment.CIRCLE_JOB }}-{{ checksum "Gemfile" }}-{{ checksum "ddtrace.gemspec" }}-{{ checksum "Appraisals" }}'
+      key: 'betav8-bundle-{{ .Environment.CIRCLE_JOB }}-{{ checksum "Gemfile" }}-{{ checksum "ddtrace.gemspec" }}-{{ checksum "Appraisals" }}'
       paths:
         - vendor/bundle
         - gemfiles/
