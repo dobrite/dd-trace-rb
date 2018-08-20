@@ -28,7 +28,7 @@ test_containers: &test_containers
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
   - &container_mysql
-    image: mysql:5.6
+    image: circleci/mysql:5.6-ram
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_PASSWORD=mysql
@@ -36,9 +36,9 @@ test_containers: &test_containers
   - &container_elasticsearch
     image: elasticsearch:2.4
   - &container_redis
-    image: redis:3.0
+    image: circleci/redis:3.0
   - &container_mongo
-    image: mongo:3.5
+    image: circleci/mongo:3.5-ram
   - &container_memcached
     image: memcached:1.5-alpine
   - &container_agent
@@ -113,6 +113,8 @@ jobs:
       - run:
           name: Delint with Rubocop
           command: bundle exec rake rubocop
+  "perform additional tests":
+    docker: [ image: circleci/buildpack-deps:bionic-curl ]
   "deploy release":
     <<: *job_defaults
     docker: [ *container-2_3 ]
