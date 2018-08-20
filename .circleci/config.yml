@@ -234,6 +234,7 @@ jobs:
           name: Disable ddtracing gem
           command: echo 'puts "ddtrace disabled"' > lib/ddtrace.rb
       - persist_to_workspace:
+          root: "."
           paths: [ "lib/ddtrace.rb" ]
 
   "aggregate benchmarks":
