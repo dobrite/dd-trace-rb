@@ -255,6 +255,21 @@ wf_aliases:
 
 workflows:
   version: 2
+  benchmark:
+    jobs:
+      - "(2.3) build":
+          <<: *default_workflow
+          type: approval
+          requires: [ "(2.3) build" ]
+      - "(1/2) benchmark": &benchmark_workflow
+          <<: *default_workflow
+          requires: [ "(2.3) build" ]
+      - "(2/2) benchmark": *benchmark_workflow
+      - "aggregate benchmarks":
+          <<: *default_workflow
+          requires:
+            - "(1/2) benchmark"
+            - "(2/2) benchmark"
   build-and-test:
     jobs:
 #      - "(1.9) build": *default_workflow
@@ -269,20 +284,7 @@ workflows:
 #      - "(2.2) test": { <<: [ *default_workflow, requires: [ "(2.2) build" ] ] }
 #      - "(2.3) test": { <<: [ *default_workflow, requires: [ "(2.3) build" ] ] }
 #      - "(2.4) test": { <<: [ *default_workflow, requires: [ "(2.4) build" ] ] }
-      - "perform additional tests":
-          <<: *default_workflow
-          type: approval
-          requires: [ "(2.3) build" ]
-      - "(1/2) benchmark": &additional_workflow
-          <<: *default_workflow
-          requires: [ "perform additional tests" ]
-      - "(2/2) benchmark": *additional_workflow
       - "static analysis": { <<: [ *default_workflow, requires: [ "(2.3) build" ] ] }
-      - "aggregate benchmarks":
-          <<: *default_workflow
-          requires:
-            - "(1/2) benchmark"
-            - "(2/2) benchmark"
       - "deploy release":
           <<: *filters_only_release_tags
           requires:
