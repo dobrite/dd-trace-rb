@@ -258,8 +258,8 @@ workflows:
   benchmark:
     jobs:
       - "perform additional tests":
-        <<: *default_workflow
-        type: approval
+          <<: *default_workflow
+          type: approval
       - "(2.3) build":
           <<: *default_workflow
           requires: [ "perform additional tests" ]
