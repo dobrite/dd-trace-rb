@@ -228,8 +228,8 @@ jobs:
     <<: *job_defaults
     docker: [ image: "circleci/buildpack-deps:jessie" ]
     steps:
-      - attach_workspace: *default_workspace
       - checkout
+      - attach_workspace: *default_workspace
       - run:
           name: Disable ddtracing gem
           command: echo 'puts "ddtrace disabled"' > lib/ddtrace.rb
