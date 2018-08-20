@@ -114,7 +114,7 @@ jobs:
           name: Delint with Rubocop
           command: bundle exec rake rubocop
   "perform additional tests":
-    docker: [ image: circleci/buildpack-deps:bionic-curl ]
+    docker: [ image: 'circleci/buildpack-deps:bionic-curl' ]
   "deploy release":
     <<: *job_defaults
     docker: [ *container-2_3 ]
