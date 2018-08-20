@@ -113,9 +113,6 @@ jobs:
       - run:
           name: Delint with Rubocop
           command: bundle exec rake rubocop
-  "perform additional tests":
-    docker: [ image: 'circleci/buildpack-deps:bionic-curl' ]
-    steps: [ checkout ]
   "deploy release":
     <<: *job_defaults
     docker: [ *container-2_3 ]
@@ -236,8 +233,6 @@ jobs:
       - run:
           name: Sidekiq benchmark results
           command: bundle exec ruby .circleci/process_benchmarks.rb tmp/benchmarks/sidekiq_test/*.csv
-
-
 
 wf_aliases:
   - &filters_all_branches_and_tags
