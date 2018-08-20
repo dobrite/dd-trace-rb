@@ -260,7 +260,6 @@ workflows:
       - "(2.3) build":
           <<: *default_workflow
           type: approval
-          requires: [ "(2.3) build" ]
       - "(1/2) benchmark": &benchmark_workflow
           <<: *default_workflow
           requires: [ "(2.3) build" ]
