@@ -200,7 +200,7 @@ jobs:
       - *container_mongo
       - *container_memcached
       - *container_agent
-  "(1/2) benchmark": &benchmark
+  "(1/5) benchmark": &benchmark
     <<: *job_defaults
     docker:
       - <<: [ *container-2_3, *docker_test_environment ]
@@ -220,7 +220,10 @@ jobs:
           root: .
           paths:
             - 'tmp/benchmarks/**/*.csv'
-  "(2/2) benchmark": *benchmark
+  "(2/5) benchmark": *benchmark
+  "(3/5) benchmark": *benchmark
+  "(4/5) benchmark": *benchmark
+  "(5/5) benchmark": *benchmark
   "aggregate benchmarks":
     <<: *job_defaults
     docker: [ *container-2_3 ]
@@ -252,20 +255,26 @@ workflows:
   version: 2
   benchmark:
     jobs:
+      - "(2.3) build": *default_workflow
       - "perform benchmarks":
           <<: *default_workflow
           type: approval
-      - "(2.3) build":
-          <<: *default_workflow
-      - "(1/2) benchmark": &benchmark_workflow
+          requires: [ "(2.3) build" ]
+      - "(1/5) benchmark": &benchmark_workflow
           <<: *default_workflow
           requires: [ "perform benchmarks" ]
-      - "(2/2) benchmark": *benchmark_workflow
+      - "(2/5) benchmark": *benchmark_workflow
+      - "(3/5) benchmark": *benchmark_workflow
+      - "(4/5) benchmark": *benchmark_workflow
+      - "(5/5) benchmark": *benchmark_workflow
       - "aggregate benchmarks":
           <<: *default_workflow
           requires:
-            - "(1/2) benchmark"
-            - "(2/2) benchmark"
+            - "(1/5) benchmark"
+            - "(2/5) benchmark"
+            - "(3/5) benchmark"
+            - "(4/5) benchmark"
+            - "(5/5) benchmark"
   build-and-test:
     jobs:
 #      - "(1.9) build": *default_workflow
