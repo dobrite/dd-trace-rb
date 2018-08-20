@@ -298,7 +298,7 @@ workflows:
 #      - "(2.0) build": *default_workflow
 #      - "(2.1) build": *default_workflow
 #      - "(2.2) build": *default_workflow
-#      - "(2.3) build": *default_workflow
+      - "(2.3) build": *default_workflow
 #      - "(2.4) build": *default_workflow
 #      - "(1.9) test": { <<: [ *default_workflow, requires: [ "(1.9) build" ] ] }
 #      - "(2.0) test": { <<: [ *default_workflow, requires: [ "(2.0) build" ] ] }
@@ -306,7 +306,7 @@ workflows:
 #      - "(2.2) test": { <<: [ *default_workflow, requires: [ "(2.2) build" ] ] }
 #      - "(2.3) test": { <<: [ *default_workflow, requires: [ "(2.3) build" ] ] }
 #      - "(2.4) test": { <<: [ *default_workflow, requires: [ "(2.4) build" ] ] }
-#      - "static analysis": { <<: [ *default_workflow, requires: [ "(2.3) build" ] ] }
+      - "static analysis": { <<: [ *default_workflow, requires: [ "(2.3) build" ] ] }
 #      - "deploy release":
 #          <<: *filters_only_release_tags
 #          requires:
