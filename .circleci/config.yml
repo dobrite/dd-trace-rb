@@ -22,7 +22,7 @@ ruby_containers: &ruby_containers
 
 test_containers: &test_containers
   - &container_postgres
-    image: postgres:9.6
+    image: circleci/postgres:9.6-alpine-ram
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
@@ -266,8 +266,11 @@ workflows:
 #      - "(2.2) test": { <<: [ *default_workflow, requires: [ "(2.2) build" ] ] }
 #      - "(2.3) test": { <<: [ *default_workflow, requires: [ "(2.3) build" ] ] }
 #      - "(2.4) test": { <<: [ *default_workflow, requires: [ "(2.4) build" ] ] }
-      - "(1/2) benchmark": { <<: [ *default_workflow, requires: [ "(2.3) build" ] ] }
-      - "(2/2) benchmark": { <<: [ *default_workflow, requires: [ "(2.3) build" ] ] }
+      - "(1/2) benchmark": &analysis_workflow
+          <<: *default_workflow
+          type: approval
+          requires: [ "(2.3) build" ]
+      - "(2/2) benchmark": *analysis_workflow
       - "static analysis": { <<: [ *default_workflow, requires: [ "(2.3) build" ] ] }
       - "aggregate benchmarks":
           <<: *default_workflow
