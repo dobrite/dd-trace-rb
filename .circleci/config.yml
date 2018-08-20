@@ -42,7 +42,7 @@ test_containers: &test_containers
   - &container_memcached
     image: memcached:1.5-alpine
   - &container_agent
-    image: datadog/docker-dd-agent
+    image: datadog/docker-dd-agent:latest-alpine
     environment:
       - DD_APM_ENABLED=true
       - DD_BIND_HOST=0.0.0.0
