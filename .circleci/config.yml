@@ -36,7 +36,7 @@ test_containers: &test_containers
   - &container_elasticsearch
     image: elasticsearch:2.4
   - &container_redis
-    image: circleci/redis:3.0
+    image: circleci/redis:3
   - &container_mongo
     image: circleci/mongo:3.5-ram
   - &container_memcached
