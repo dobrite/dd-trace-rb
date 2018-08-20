@@ -265,7 +265,7 @@ wf_aliases:
 
 workflows:
   version: 2
-  "basline benchmark":
+  "baseline benchmark":
     jobs:
       - "benchmark baseline":
           <<: *default_workflow
@@ -275,7 +275,6 @@ workflows:
           requires: [ "benchmark baseline" ]
       - "build baseline":
           <<: *default_workflow
-          type: approval
           requires: [ "(2.3) build" ]
       - "(1/5) benchmark": &benchmark_workflow
           <<: *default_workflow
