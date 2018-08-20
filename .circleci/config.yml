@@ -38,7 +38,7 @@ test_containers: &test_containers
   - &container_redis
     image: circleci/redis:3
   - &container_mongo
-    image: circleci/mongo:3.5-ram
+    image: circleci/mongo:3.5.13-ram
   - &container_memcached
     image: memcached:1.5-alpine
   - &container_agent
